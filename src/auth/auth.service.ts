@@ -13,7 +13,6 @@ import { ChangePasswordDto } from './dto/change-password.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
-import { UserInfo } from 'src/models/userInfoModel';
 import { Role } from '@prisma/client';
 import { RoleChangeDto } from './dto/role-change.dto';
 import { CurrentUserDto } from 'src/users/dto/current-user.dto';
@@ -27,7 +26,7 @@ export class AuthService {
   ) {}
 
   async changePassword(changePasswordDto: ChangePasswordDto) {
-    const { email, newPassword, oldPassword, confirmPassword } =
+    const { email, newPassword, oldPassword, confirmPassword, adminUser } =
       changePasswordDto;
 
     //----> Check for match between newPassword and confirmPassword.
@@ -69,20 +68,22 @@ export class AuthService {
       role: updatedUserDetail.role,
     });
 
-    //----> User info.
-    const userInfo: UserInfo = {
-      id: updatedUserDetail.id,
-      name: updatedUserDetail.name,
-      role: updatedUserDetail.role,
-      token,
-      message: 'Password has been successfully updated!',
+    //----> User info.    
+    const isAdmin = adminUser?.role === Role.Admin;
+
+    const authResponse: AuthResponse = {
+      user: isAdmin ? adminUser : updatedUserDetail,
+      signIn: updatedUserDetail,
+      token: isAdmin ? adminUser?.token : token,
+      isLoggedIn: true,
+      isAdmin: isAdmin ? true : false,
     };
 
-    return userInfo;
+    return authResponse;
   }
 
   async editProfile(editProfileDto: EditProfileDto) {
-    const { email, password } = editProfileDto;
+    const { email, password, adminUser} = editProfileDto;
     //----> Retrieve the user.
     const user = await this.prisma.user.findUnique({ where: { email } });
 
@@ -114,16 +115,19 @@ export class AuthService {
       role: updatedUserDetail.role,
     });
 
-    //----> User info.
-    const userInfo: UserInfo = {
-      id: updatedUserDetail.id,
-      name: updatedUserDetail.name,
-      role: updatedUserDetail.role,
-      token,
-      message: 'User info has been successfully updated!',
+    //----> User info.    
+    const isAdmin = adminUser?.role === Role.Admin;
+
+    const authResponse: AuthResponse = {
+      user: isAdmin ? adminUser : updatedUserDetail,
+      signIn: updatedUserDetail,
+      token: isAdmin ? adminUser?.token : token,
+      isLoggedIn: true,
+      isAdmin: isAdmin ? true : Boolean(updatedUserDetail.role),
     };
 
-    return userInfo;
+    console.log("In-edit-profile, authResponse : ", authResponse)
+    return authResponse;
   }
 
   async login(loginDto: LoginDto) {

@@ -68,9 +68,13 @@ export class CustomersService {
 
   async remove(id: string): Promise<Customer> {
     //----> Check for the existence of customer with the given id.
-    this.findOne(id);
+    await this.findOne(id);
     //----> Delete the customer with the the given id.
-    const deletedCustomer = await this.prisma.customer.delete({where: {id}});
+    const deletedCustomer = await this.prisma.customer.delete({
+      where: { id },
+    });
+    //----> Delete the attached user before deleting the customer.
+    await this.prisma.user.delete({ where: { id: deletedCustomer?.userId } });
     //----> Send back the response.
     return deletedCustomer;
   }

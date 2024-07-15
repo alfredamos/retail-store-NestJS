@@ -7,6 +7,7 @@ import {
   IsOptional,
   IsString,
 } from 'class-validator';
+import { AdminUser } from 'src/models/adminUser';
 
 export class EditProfileDto {
   @IsNotEmpty()
@@ -28,4 +29,6 @@ export class EditProfileDto {
   @IsOptional()
   @IsEnum(Gender)
   gender: Gender;
+  @IsOptional()
+  adminUser: AdminUser;
 }
